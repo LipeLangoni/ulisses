@@ -11,6 +11,7 @@ vector_store = Chroma(
     persist_directory="./chroma_langchain_db",  # Where to save data locally, remove if not neccesary
 )
 
+
 def split_topics(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
         text = file.read()
