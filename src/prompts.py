@@ -8,64 +8,26 @@ examples = [
     }]
 
 
-SCHEMA = """CREATE TABLE ordens_bancarias (
-        ndeg_ob INTEGER, 
-        data_ob TIMESTAMP, 
-        no_instrumento INTEGER, 
-        uf TEXT, 
-        municipio TEXT, 
-        tipo_de_repasse TEXT, 
-        "situacao_(portal_fns)" TEXT, 
-        valor_repasse REAL
-)
-
-/*
-3 rows from ordens_bancarias table:
-ndeg_ob data_ob no_instrumento  uf      municipio       tipo_de_repasse situacao_(portal_fns)   valor_repasse
-20405   2024-07-05 00:00:00     12008067000121007       AP      CUTIAS  FAF     PROPOSTA PAGA   460262.0
-20414   2024-07-05 00:00:00     12456167000123014       AP      VITORIA DO JARI FAF     PROPOSTA PAGA   641520.0
-20651   2024-07-05 00:00:00     36000580575202400       BA      XIQUE-XIQUE     FAF     PROPOSTA PAGA   1747000.0
-*/
-
-
-CREATE TABLE tabela_instrumentos (
-        ano INTEGER, 
-        ndeg_emenda INTEGER, 
-        partido TEXT, 
-        parlamentar TEXT, 
-        uf TEXT, 
-        "cod._municipio_ibge" INTEGER, 
-        municipio TEXT, 
-        tipo_de_emenda TEXT, 
-        grupo_de_despesa TEXT, 
-        subfuncao INTEGER, 
-        fonte INTEGER, 
-        funcional TEXT, 
-        data_inicio_proposta TEXT, 
-        ndeg_instrumento INTEGER, 
-        tipo_de_repasse TEXT, 
-        tipo_de_instrumento TEXT, 
-        "acao_orc." TEXT, 
-        programa_estrategico TEXT, 
-        componente TEXT, 
-        beneficiario TEXT, 
-        "nr._portaria" TEXT, 
-        data_portaria TIMESTAMP, 
-        "situacao_(portal_fns)" TEXT, 
-        "situacao_(ds_proposta)" TEXT, 
-        data_ultimo_pgto TEXT, 
-        instrumento REAL, 
-        empenhado REAL, 
-        pago REAL
-)
-
-/*
-3 rows from tabela_instrumentos table:
-ano     ndeg_emenda     partido parlamentar     uf      cod._municipio_ibge     municipio       tipo_de_emenda  grupo_de_despesa        subfuncao       fonte   funcional       data_inicio_proposta      ndeg_instrumento        tipo_de_repasse tipo_de_instrumento     acao_orc.       programa_estrategico    componente      beneficiario    nr._portaria    data_portaria   situacao_(portal_fns)     situacao_(ds_proposta)  data_ultimo_pgto        instrumento     empenhado       pago
-2024    43210001        PSD     CASTRO NETO     PI      220080  ANTONIO ALMEIDA INDIVIDUAL      CORRENTE        301     1001    1030151192E890022       2024-03-25 00:00:00     36000583614202400 FAF     INCREMENTO PAP  2E89    INCREMENTO TEMPORÁRIO AO CUSTEIO DOS SERVIÇOS DE ATENÇÃO PRIMÁRIA À SAÚDE - PAP INCREMENTO DO PISO DA ATENÇÃO PRIMÁRIA À SAÚDE - PAP    FUNDO MUNICIPAL DE SAUDE  3521/2024       2024-04-15 00:00:00     PROPOSTA PAGA   Proposta Paga   2024-05-14 00:00:00     151734.0        151734.0        151734.0
-2024    90550006        NOVO    GILSON MARQUES  SC      420750  INDAIAL INDIVIDUAL      CORRENTE        302     1001    1030251182E900042       2024-04-04 00:00:00     36000596203202400FAF      INCREMENTO MAC  2E90    ATENÇÃO ESPECIALIZADA À SAÚDE   INCREMENTO TEMPORÁRIO DO TETO DA MÉDIA E ALTA COMPLEXIDADE - MAC        FUNDO MUNICIPAL DE SAUDE DE INDAIAL     3626/20242024-04-30 00:00:00      LIBERADO PAGAMENTO FNS  Proposta aprovada para Pagamento        -       300000.0        300000.0        0.0
-2024    38220007        PT      MERLONG SOLANO  PI      220310  CRISTINO CASTRO INDIVIDUAL      CORRENTE        301     1001    1030151192E890022       2024-03-25 00:00:00     36000582736202400 FAF     INCREMENTO PAP  2E89    INCREMENTO TEMPORÁRIO AO CUSTEIO DOS SERVIÇOS DE ATENÇÃO PRIMÁRIA À SAÚDE - PAP INCREMENTO DO PISO DA ATENÇÃO PRIMÁRIA À SAÚDE - PAP    FUNDO MUNICIPAL DE SAUDE DE CRISTINO CASTRO - PI  3521/2024       2024-04-15 00:00:00     PROPOSTA PAGA   Proposta Paga   2024-05-23 00:00:00     2306000.0       2306000.0       2306000.0
-
+SCHEMA = """CREATE TABLE IF NOT EXISTS "orcamento" (
+"autor_desc" TEXT,
+  "emenda_cod" TEXT,
+  "autorizado" REAL,
+  "empenhado" REAL,
+  "executado" REAL,
+  "funcao_cod" INTEGER,
+  "funcao_desc" TEXT,
+  "subfuncao_cod" INTEGER,
+  "subfuncao_desc" TEXT,
+  "programa_cod" INTEGER,
+  "programa_desc" TEXT,
+  "acao_cod" TEXT,
+  "acao_desc" TEXT,
+  "localizador_cod" INTEGER,
+  "gnd_cod" INTEGER,
+  "gnd_desc" TEXT,
+  "modalidade_cod" INTEGER,
+  "modalidade_desc" TEXT
+);
 Here are the tools you have access:"""
 
 FORMAT_INSTRUCTIONS = """
@@ -77,7 +39,8 @@ Action Input: the input to the action
 Observation: the result of the action
 ... (this Thought/Action/Action Input/Observation can repeat N times)
 Thought: I now know the final answer
-Final Answer: the final answer to the original input question"""
+Simplify: Simplify the budgetary terms and concetps in a way that a common citizen would understand
+Final Answer: the simplified final answer to the original input question"""
 
 SQL_PREFIX = """You are an agent designed to interact with a SQL database.
 Given an input question, create a syntactically correct {dialect} query to run, then look at the results of the query and return the answer.
@@ -90,7 +53,7 @@ You MUST double check your query before executing it. If you get an error while 
 
 DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the database.
 
-If the question does not seem related to the database, just return "I don't know" as the answer. Here are the schema of the db:
+After elaborating the answer, use the retriever tool to get the context of concepts of specific budgetary terms and simplify it to the user in a way that makes it uncomplicated
 """
 
 SQL_SUFFIX = """Begin!
@@ -113,7 +76,7 @@ template = "\n\n".join(
             )
 prompt = PromptTemplate.from_template(template)
 
-ulisses_prompt = """You are an agent designed to answer to the user questions related to brazil budget movement and facilitate understanding the complex terms.
+ulisses_prompt = f"""You are an agent designed to answer to the user questions related to brazil budget movement and facilitate understanding the complex terms.
 for this purpose, you have access to a range of tools to communicate to a sql database, as well as to a vectorstore to retrieve context about specific terms.
 
 Given an input question, create a syntactically correct sqlite query to run, then look at the results of the query and return the answer.
@@ -126,5 +89,29 @@ You MUST double check your query before executing it. If you get an error while 
 
 DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the database.
 
+here is the schema of the db:
+
+{SCHEMA}
+
 After getting the result of the database, you MUST use the retriever_tool to access the Glossary of Budgetary Terms and find the description of the terms you have to
-explain to the user"""
+explain to the user. Once you have the context of the term, simplify it to the user in a way that anyone could easily understand
+
+Example:
+
+Answer to the user: 
+1. **Mara Gabrielli** - R$ 308.459.293,07
+2. **Celso Russomanno** - R$ 260.452.807,74
+Esses valores refletem a soma dos repasses realizados através das emendas parlamentares.
+
+Action: retriever_toool
+Query: repasses
+
+Final Simplified Answer: 
+1. **Mara Gabrielli** - R$ 308.459.293,07
+2. **Celso Russomanno** - R$ 260.452.807,74
+Esses valores refletem a soma dos repasses realizados através das emendas parlamentares. 
+"Repasses" referem-se a transferências de dinheiro que o governo faz de uma entidade para outra. 
+Por exemplo, o governo federal pode transferir recursos para estados e municípios, que então usam esse dinheiro para financiar serviços como saúde, 
+educação, segurança, etc. Em outras palavras, são como "envios de dinheiro" feitos pelo governo para garantir que diferentes áreas e regiões possam 
+cuidar das necessidades da população.
+ """
