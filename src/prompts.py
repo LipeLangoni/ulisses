@@ -1,10 +1,12 @@
 from langchain_core.prompts import BasePromptTemplate, PromptTemplate
 
 examples = [
-    {"input": "List all artists.", "query": "SELECT * FROM Artist;"},
+    {"input": "Quais são os programas que receberam a maior parte dos recursos de emendas parlamentares em 2024?", 
+     "query": "SELECT programa_desc, SUM(empenhado) AS total_empenhado FROM orcamento WHERE strftime('%Y', 'now') = '2024' GROUP BY programa_desc ORDER BY total_empenhado DESC LIMIT 10;"
+     },
     {
-        "input": "Find all albums for the artist 'AC/DC'.",
-        "query": "SELECT * FROM tabela_instrumentos WHERE ArtistId = (SELECT ArtistId FROM Artist WHERE Name = 'AC/DC');",
+        "input": "Quais foram os parlamentares que mais enviaram recursos via emendas parlamentares em 2024?",
+        "query": "SELECT autor_desc, SUM(empenhado) AS total_empenhado FROM orcamento GROUP BY autor_desc ORDER BY total_empenhado DESC LIMIT 10;",
     }]
 
 
