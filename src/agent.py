@@ -1,18 +1,20 @@
 from langchain.utilities import SQLDatabase
 from langchain.llms import OpenAI
 from langchain.agents import create_sql_agent
-from tools import SQLDatabaseToolkit
+from src.tools import SQLDatabaseToolkit
 from langchain.agents.agent_types import AgentType
-from prompts import ulisses_prompt
+from src.prompts import ulisses_prompt
 from langchain.tools.retriever import create_retriever_tool
 from langchain_chroma import Chroma
 from langchain_openai import OpenAIEmbeddings
 from langgraph.prebuilt import create_react_agent
 from langgraph.checkpoint.memory import MemorySaver
 
+open_api_key = "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"
+
 class GraphAgent:
     def __init__(self,db,llm):
-        embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+        embeddings = OpenAIEmbeddings(openai_api_key=open_api_key,model="text-embedding-3-small")
         self.vectorstore = Chroma(
             collection_name="congresso",
             embedding_function=embeddings,

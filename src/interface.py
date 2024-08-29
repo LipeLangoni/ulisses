@@ -2,13 +2,7 @@ import streamlit as st
 import requests
 from langchain_community.utilities import SQLDatabase
 from langchain_openai import ChatOpenAI
-from agent import GraphAgent
-
-db = SQLDatabase.from_uri("sqlite:///emendas.db")
-
-llm = ChatOpenAI(openai_api_key=st.secrets["OPENAI_API_KEY"], model="gpt-4o-mini", temperature=0)
-
-agent = GraphAgent(db, llm)
+import os
 
 st.title("Ulysses - Assistente de Pesquisa de Emendas Parlamentares")
 
@@ -19,22 +13,21 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"], unsafe_allow_html=True)
+    st.chat_message(message["role"]).write(message["content"])
+       
 
 # Chat input
 if prompt := st.chat_input("Digite sua pergunta sobre emendas parlamentares"):
-    with st.chat_message("user"):
-        st.markdown(prompt)
+
+    st.chat_message("user").write(prompt)
     
     st.session_state.messages.append({"role": "user", "content": prompt})
     
     with st.spinner("Pensando..."):
-        response = agent.stream(prompt)
+        response = requests.post(url="http://localhost:8000/ulisses",json={"input":prompt})
     
-    with st.chat_message("assistant", avatar="avatar.jpg"):
-        st.markdown(response, unsafe_allow_html=True)
+    st.chat_message("assistant", avatar="src/avatar.jpg").write(response.content.decode('utf-8').replace('"',''))
 
-    st.session_state.messages.append({"role": "assistant", "content": response})
+    st.session_state.messages.append({"role": "assistant", "content": response.content.decode('utf-8').replace('"','')})
 
 st.write(f"<p style='padding-bottom: 50px;'></p>", unsafe_allow_html=True)
