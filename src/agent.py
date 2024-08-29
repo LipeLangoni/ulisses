@@ -9,12 +9,14 @@ from langchain_chroma import Chroma
 from langchain_openai import OpenAIEmbeddings
 from langgraph.prebuilt import create_react_agent
 from langgraph.checkpoint.memory import MemorySaver
+from dotenv import load_dotenv
+import os
+load_dotenv()
 
-open_api_key = "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"
-
+openai_api_key = os.getenv('OPENAI_API_KEY')
 class GraphAgent:
     def __init__(self,db,llm):
-        embeddings = OpenAIEmbeddings(openai_api_key=open_api_key,model="text-embedding-3-small")
+        embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key,model="text-embedding-3-small")
         self.vectorstore = Chroma(
             collection_name="congresso",
             embedding_function=embeddings,

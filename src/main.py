@@ -16,6 +16,11 @@ from pydantic import BaseModel
 from typing import List
 import logging
 from datetime import datetime
+from dotenv import load_dotenv
+
+load_dotenv()
+
+openai_api_key = os.getenv('OPENAI_API_KEY')
 
 logging.basicConfig(
     filename="api_requests.log",
@@ -25,9 +30,7 @@ logging.basicConfig(
 
 db = SQLDatabase.from_uri("sqlite:///emendas.db")
 
-open_api_key = "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"
-
-llm = ChatOpenAI(openai_api_key=open_api_key,model="gpt-4o-mini", temperature=0)
+llm = ChatOpenAI(openai_api_key=openai_api_key,model="gpt-4o-mini", temperature=0)
 agent = GraphAgent(db,llm)
 
 app = FastAPI()
