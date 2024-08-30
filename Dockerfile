@@ -6,6 +6,10 @@ COPY . /app
 
 RUN pip install -r requirements/requirements.txt
 
+RUN apt-get update && apt-get install -y sqlite3
+
+RUN python src/generate_db.py
+
 EXPOSE 8000
 EXPOSE 8501
 

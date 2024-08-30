@@ -28,14 +28,14 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
-db = SQLDatabase.from_uri("sqlite:///emendas.db")
+db = SQLDatabase.from_uri("sqlite:///orcamento.db")
 
 llm = ChatOpenAI(openai_api_key=openai_api_key,model="gpt-4o-mini", temperature=0)
 agent = GraphAgent(db,llm)
 
 app = FastAPI()
 
-@app.post("/ulisses")
+@app.post("/lumia")
 async def add_item(request: Request,input:dict):
 
     logging.info(f"Request URL: {request.url}")

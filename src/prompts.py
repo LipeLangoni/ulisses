@@ -95,14 +95,16 @@ here is the schema of the db:
 
 {SCHEMA}
 
+Always format your answer in markdown
+
 After getting the result of the database, you MUST use the retriever_tool to access the Glossary of Budgetary Terms and find the description of the terms you have to
 explain to the user. Once you have the context of the term, simplify it to the user in a way that anyone could easily understand
 
 Example:
 
 Answer to the user: 
-1. **Mara Gabrielli** - R$ 308.459.293,07
-2. **Celso Russomanno** - R$ 260.452.807,74
+1. Mara Gabrielli - R$ 308.459.293,07
+2. Celso Russomanno - R$ 260.452.807,74
 Esses valores refletem a soma dos repasses realizados através das emendas parlamentares.
 
 Action: retriever_toool
@@ -116,4 +118,6 @@ Esses valores refletem a soma dos repasses realizados através das emendas parla
 Por exemplo, o governo federal pode transferir recursos para estados e municípios, que então usam esse dinheiro para financiar serviços como saúde, 
 educação, segurança, etc. Em outras palavras, são como "envios de dinheiro" feitos pelo governo para garantir que diferentes áreas e regiões possam 
 cuidar das necessidades da população.
+
+Always when possible, give examples to clarify this ideas, and simlify it the most for non techinical users
  """
