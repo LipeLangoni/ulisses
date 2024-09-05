@@ -3,12 +3,13 @@ from langchain.llms import OpenAI
 from langchain.agents import create_sql_agent
 from src.tools import SQLDatabaseToolkit
 from langchain.agents.agent_types import AgentType
-from src.prompts import ulisses_prompt
+from src.prompts import ulisses_prompt,simplifier_prompt
 from langchain.tools.retriever import create_retriever_tool
 from langchain_chroma import Chroma
 from langchain_openai import OpenAIEmbeddings
 from langgraph.prebuilt import create_react_agent
 from langgraph.checkpoint.memory import MemorySaver
+from langchain_core.output_parsers import StrOutputParser
 from dotenv import load_dotenv
 import os
 load_dotenv()
@@ -16,6 +17,7 @@ load_dotenv()
 openai_api_key = os.getenv('OPENAI_API_KEY')
 class GraphAgent:
     def __init__(self,db,llm):
+        output_parser = StrOutputParser()
         embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key,model="text-embedding-3-small")
         self.vectorstore = Chroma(
             collection_name="congresso",
@@ -31,7 +33,8 @@ class GraphAgent:
             )
         self.tools = SQLDatabaseToolkit(db=db, llm=llm).get_tools()
         self.tools.append(self.retriever_tool)
-        self.agent = create_react_agent(llm, tools=self.tools,messages_modifier=ulisses_prompt,checkpointer=MemorySaver())
+        self.agent = create_react_agent(llm, tools=self.tools,messages_modifier=ulisses_prompt)
+        self.simplifier =  simplifier_prompt | llm | output_parser
 
     def invoke(self,input):
         return self.agent.invoke({"messages": [("user", input)]},config={"configurable": {"thread_id": "1"}})
@@ -49,6 +52,6 @@ class GraphAgent:
             return last_message.content
     
     def stream(self,input):
-        return self.print_stream(self.agent.stream({"messages": [("user", input)]},config={"configurable": {"thread_id": "1"}},stream_mode="values"))
+        return self.simplifier.invoke({"input":self.print_stream(self.agent.stream({"messages": [("user", input)]},stream_mode="values"))})
     
     

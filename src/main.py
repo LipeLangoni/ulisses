@@ -42,4 +42,4 @@ async def add_item(request: Request,input:dict):
     logging.info(f"Request Body: {input}")
     logging.info(f"Client IP: {request.client.host}")
 
-    return agent.stream(input.get("input"))
+    return agent.stream(f"chat history:{input.get('memory')} \n\n user new input: {input.get('input')}")
