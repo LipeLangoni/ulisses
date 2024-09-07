@@ -1,16 +1,6 @@
 from langchain_core.prompts import BasePromptTemplate, PromptTemplate,ChatPromptTemplate
 
 
-examples = [
-    {"input": "Quais são os programas que receberam a maior parte dos recursos de emendas parlamentares em 2024?", 
-     "query": "SELECT programa_desc, SUM(empenhado) AS total_empenhado FROM orcamento WHERE strftime('%Y', 'now') = '2024' GROUP BY programa_desc ORDER BY total_empenhado DESC LIMIT 10;"
-     },
-    {
-        "input": "Quais foram os parlamentares que mais enviaram recursos via emendas parlamentares em 2024?",
-        "query": "SELECT autor_desc, SUM(empenhado) AS total_empenhado FROM orcamento GROUP BY autor_desc ORDER BY total_empenhado DESC LIMIT 10;",
-    }]
-
-
 SCHEMA = """ "tabelao" (
 1. codigo_emenda: Identifier code for the parliamentary amendment.
 2. nome_autor: Name of the author of the amendment.
@@ -44,53 +34,7 @@ SCHEMA = """ "tabelao" (
     )
 Here are the tools you have access:"""
 
-FORMAT_INSTRUCTIONS = """
-Use the following format:
-Question: the input question you must answer
-Thought: you should always think about what to do
-Action: the action to take, should be one of [{tool_names}]
-Action Input: the input to the action
-Observation: the result of the action
-... (this Thought/Action/Action Input/Observation can repeat N times)
-Thought: I now know the final answer
-Simplify: Simplify the budgetary terms and concetps in a way that a common citizen would understand
-Final Answer: the simplified final answer to the original input question"""
-
-SQL_PREFIX = """You are an agent designed to interact with a SQL database.
-Given an input question, create a syntactically correct {dialect} query to run, then look at the results of the query and return the answer.
-Unless the user specifies a specific number of examples they wish to obtain, always limit your query to at most {top_k} results.
-You can order the results by a relevant column to return the most interesting examples in the database.
-Never query for all the columns from a specific table, only ask for the relevant columns given the question.
-You have access to tools for interacting with the database.
-Only use the below tools. Only use the information returned by the below tools to construct your final answer.
-You MUST double check your query before executing it. If you get an error while executing a query, rewrite the query and try again.
-
-DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the database.
-
-After elaborating the answer, use the retriever tool to get the context of concepts of specific budgetary terms and simplify it to the user in a way that makes it uncomplicated
-"""
-
-SQL_SUFFIX = """Begin!
-
-Question: {input}
-Thought: I should look at the tables in the database to see what I can query.  Then I should query the schema of the most relevant tables. I Should ALWAYS format my
-final answer in markdown, ALWAYS answer in portuguese!
-{agent_scratchpad}"""
-
-SQL_FUNCTIONS_SUFFIX = """I should look at the tables in the database to see what I can query.  Then I should query the schema of the most relevant tables."""
-
-template = "\n\n".join(
-                [
-                    SQL_PREFIX,
-                    SCHEMA,
-                    "{tools}",
-                    FORMAT_INSTRUCTIONS,
-                    SQL_SUFFIX,
-                ]
-            )
-prompt = PromptTemplate.from_template(template)
-
-ulisses_prompt = f"""You are an agent designed to answer to the user questions related to brazil budget movement and facilitate understanding the complex terms.
+ulisses_prompt = f"""You are an agent designed to answer to the user questions related to brazil "emendas parlamentares" only, and facilitate understanding the complex terms.
 for this purpose, you have access to a range of tools to communicate to a sql database, as well as to a vectorstore to retrieve context about specific terms.
 
 Given an input question, create a syntactically correct sqlite query to run, then look at the results of the query and return the answer.
@@ -106,7 +50,12 @@ DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the databa
 NEVER show the user informations about the database or the queries used, just the final results and explanation about it are allowed. If the user asks for database or
 query infos, just answer that you are not alowed
 
-ALWAYS use the key LOWER in your queries when you have to filter strings, because it is case sensitive and it must be padronized in order to be properly filtered
+NEVER make judgements like "good" or "bad", just make a neutral description without making compliments for senadores or anyone
+
+The column "nome_autor" contains "bancadas" and ".comissoes" besides senador and deputado federal, so make sure to properly filter it
+using "tipo_autor" to select the corresponding type according to the question, if the user asks for "parlamentar", you have to filter by "Senador" and "Deputado Federal"
+
+ALWAYS use the key LOWER in every string column in your queries when you have to filter strings, because it is case sensitive and it must be padronized in order to be properly filtered
 
 If you cant find the name of a parlamentar or senador, do a distinct count in this column to check if you are spelling it right or use %like to get the most similar
 

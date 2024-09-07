@@ -21,7 +21,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 openai_api_key = os.getenv('OPENAI_API_KEY')
-
+print(openai_api_key)
 logging.basicConfig(
     filename="api_requests.log",
     level=logging.INFO,
@@ -41,5 +41,4 @@ async def add_item(request: Request,input:dict):
     logging.info(f"Request URL: {request.url}")
     logging.info(f"Request Body: {input}")
     logging.info(f"Client IP: {request.client.host}")
-
     return agent.stream(f"chat history:{input.get('memory')} \n\n user new input: {input.get('input')}")
