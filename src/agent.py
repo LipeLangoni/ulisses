@@ -12,8 +12,22 @@ from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.output_parsers import StrOutputParser
 from dotenv import load_dotenv
 import os
+from langfuse.callback import CallbackHandler
+
+
+
+
 load_dotenv()
 
+PUBLIC_KEY = os.getenv('PUBLIC_KEY')
+SECRET_KEY = os.getenv('SECRET_KEY')
+HOST = os.getenv('HOST')
+
+langfuse_handler = CallbackHandler(
+    public_key=PUBLIC_KEY,
+    secret_key=SECRET_KEY,
+    host=HOST
+)
 openai_api_key = os.getenv('OPENAI_API_KEY')
 class GraphAgent:
     def __init__(self,db,llm):
@@ -52,6 +66,6 @@ class GraphAgent:
             return last_message.content
     
     def stream(self,input):
-        return self.simplifier.invoke({"input":self.print_stream(self.agent.stream({"messages": [("user", input)]},stream_mode="values"))})
+        return self.simplifier.invoke({"input":self.print_stream(self.agent.stream({"messages": [("user", input)]},config={"callbacks": [langfuse_handler]},stream_mode="values"))})
     
     
