@@ -13,7 +13,46 @@ from langchain_core.output_parsers import StrOutputParser
 from dotenv import load_dotenv
 import os
 from langfuse.callback import CallbackHandler
+from langchain_chroma import Chroma
+from langchain_core.example_selectors import SemanticSimilarityExampleSelector
+from langchain_openai import OpenAIEmbeddings
 
+examples = [
+    {"input": "Quem enviou recursos para Belém?", "output": """SELECT t.nome_autor, t.tipo_autor, t.partido_autor, SUM(tf.valor_pago) AS valor_total_pago 
+                                                                FROM tabelao t 
+                                                                JOIN tabelao_favorecidos tf 
+                                                                ON t.codigo_emenda = tf.codigo_emenda 
+                                                                WHERE tf.municipio_favorecido = 'belem' 
+                                                                GROUP BY t.nome_autor, t.tipo_autor, t.partido_autor
+                                                                ORDER BY SUM(tf.valor_pago) DESC;"""},
+    {"input": "Para que os recursos foram enviados para Belém?", "output": """SELECT t.descricao_acao, t.descricao_programa, t.descricao_funcao, t.descricao_subfuncao, SUM(tf.valor_pago) AS valor_total_pago
+                                                                                FROM tabelao t 
+                                                                                JOIN tabelao_favorecidos tf 
+                                                                                ON t.codigo_emenda = tf.codigo_emenda 
+                                                                                WHERE tf.municipio_favorecido = 'belem'
+                                                                                GROUP BY t.descricao_acao, t.descricao_programa, t.descricao_funcao, t.descricao_subfuncao
+                                                                                ORDER BY valor_total_pago DESC;"""},
+    {"input": "Para que a deputada Adriana Ventura enviou recursos para o município de São Paulo?", "output": """SELECT t.descricao_acao, t.descricao_programa, t.descricao_funcao, t.descricao_subfuncao, SUM(tf.valor_pago) AS valor_total_pago
+                                                                                                                    FROM tabelao t 
+                                                                                                                    JOIN tabelao_favorecidos tf 
+                                                                                                                    ON t.codigo_emenda = tf.codigo_emenda 
+                                                                                                                    WHERE t.nome_autor = 'adriana ventura' 
+                                                                                                                    AND tf.municipio_favorecido = 'sao paulo'
+                                                                                                                    GROUP BY t.descricao_acao, t.descricao_programa, t.descricao_funcao, t.descricao_subfuncao
+                                                                                                                    ORDER BY valor_total_pago DESC;"""},
+    {"input": "Quem enviou mais recursos para a saúde para Curitiba?", "output": """SELECT t.nome_autor, t.tipo_autor, t.partido_autor, SUM(tf.valor_pago) AS valor_total_pago
+                                                                                    FROM tabelao t
+                                                                                    JOIN tabelao_favorecidos tf
+                                                                                    ON t.codigo_emenda = tf.codigo_emenda
+                                                                                    WHERE tf.municipio_favorecido = 'curitiba'
+                                                                                    AND t.descricao_funcao = 'saude'
+                                                                                    GROUP BY t.nome_autor, t.tipo_autor, t.partido_autor
+                                                                                    ORDER BY valor_total_pago DESC
+                                                                                    LIMIT 10;"""}
+]
+
+
+to_vectorize = [" ".join(example.values()) for example in examples]
 
 
 
@@ -29,10 +68,16 @@ langfuse_handler = CallbackHandler(
     host=HOST
 )
 openai_api_key = os.getenv('OPENAI_API_KEY')
+
 class GraphAgent:
     def __init__(self,db,llm):
         output_parser = StrOutputParser()
         embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key,model="text-embedding-3-small")
+        few_shot_store = Chroma.from_texts(to_vectorize, embeddings, metadatas=examples)
+        self.example_selector = SemanticSimilarityExampleSelector(
+                                                            vectorstore=few_shot_store,
+                                                            k=1,
+                                                        )
         self.vectorstore = Chroma(
             collection_name="congresso",
             embedding_function=embeddings,
@@ -51,7 +96,7 @@ class GraphAgent:
         self.simplifier =  simplifier_prompt | llm | output_parser
 
     def invoke(self,input):
-        return self.agent.invoke({"messages": [("user", input)]},config={"configurable": {"thread_id": "1"}})
+        return self.agent.invoke({"messages": [("user", f"Use This Example to elaborate your query for this specific question{self.example_selector.select_examples({'input': input})}\n User Input:{input}")]},config={"configurable": {"thread_id": "1"}})
     
     def print_stream(self,stream):
         for s in stream:
@@ -66,6 +111,6 @@ class GraphAgent:
             return last_message.content
     
     def stream(self,input):
-        return self.simplifier.invoke({"input":self.print_stream(self.agent.stream({"messages": [("user", input)]},config={"callbacks": [langfuse_handler]},stream_mode="values"))})
+        return self.simplifier.invoke({"input":self.print_stream(self.agent.stream({"messages": [("user", f"Use This Example to elaborate your query for this specific question{self.example_selector.select_examples({'input': input})}\n User Input:{input}")]},config={"callbacks": [langfuse_handler]},stream_mode="values"))})
     
     
