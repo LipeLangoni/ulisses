@@ -31,7 +31,7 @@ def extract_history(window):
 st.title("Lumi-a - Assistente de Pesquisa de Emendas Orçamentárias")
 
 # Add disclaimer
-st.info("""Disclaimer: a solução contém exclusivamente dados dos recursos destinados e empenhados via emendas parlamentares para o orçamento de 2024, abrangendo a funcional programática (função, subfunção, programa, ação e localizador), a modalidade e o grupo de natureza de despesa (GND). Atualização até 29/08/2024.
+st.info("""Disclaimer: A solução contém exclusivamente dados dos recursos destinados e empenhados via emendas parlamentares para o orçamento de 2024, abrangendo a funcional programática (função, subfunção, programa, ação e localizador), a modalidade e o grupo de natureza de despesa (GND). Atualização até 29/08/2024.
         \n\nContato: forgelabsdata@gmail.com""")
 
 if "messages" not in st.session_state:

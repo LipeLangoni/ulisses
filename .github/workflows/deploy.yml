@@ -39,7 +39,7 @@ jobs:
             git pull origin Master
             docker compose down 
             docker system prune --all --force
-            docker compose up --build
+            docker compose up --build -d
       - name: Update deployment Status (success)
         if: success()
         uses: chrnorm/deployment-status@v2
