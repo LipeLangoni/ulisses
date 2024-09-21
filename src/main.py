@@ -30,7 +30,7 @@ logging.basicConfig(
 
 db = SQLDatabase.from_uri("sqlite:///orcamento.db")
 
-llm = ChatOpenAI(openai_api_key=openai_api_key,model="gpt-4o-mini", temperature=0)
+llm = ChatOpenAI(openai_api_key=openai_api_key,model="gpt-4o", temperature=0)
 agent = GraphAgent(db,llm)
 
 app = FastAPI()
