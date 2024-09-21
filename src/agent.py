@@ -39,7 +39,7 @@ examples = [
                                                                                                                 WHERE t.nome_autor = 'adriana ventura' 
                                                                                                                 AND tf.municipio_favorecido = 'sao paulo'
                                                                                                                 ORDER BY valor_total_pago DESC;"""},
-    {"input": "Quem enviou mais recursos para a saúde para Curitiba?", "output": """SELECT t.nome_autor, t.tipo_autor, t.partido_autor, SUM(tf.valor_pago) AS valor_total_pago
+    {"input": "Quem enviou mais recursos para a saúde para Curitiba?", "output": """SELECT t.nome_autor, t.tipo_autor, t.partido_autor, SUM(DISTINCT tf.valor_pago) AS valor_total_pago
                                                                                     FROM tabelao t
                                                                                     JOIN tabelao_favorecidos tf
                                                                                     ON t.codigo_emenda = tf.codigo_emenda
@@ -47,108 +47,7 @@ examples = [
                                                                                     AND t.descricao_funcao = 'saude'
                                                                                     GROUP BY t.nome_autor, t.tipo_autor, t.partido_autor
                                                                                     ORDER BY valor_total_pago DESC
-                                                                                    LIMIT 10;"""},
-    {
-        "input": "Quem enviou mais recursos para a educação para Belo Horizonte?",
-        "output": """SELECT t.nome_autor, t.tipo_autor, t.partido_autor, SUM(tf.valor_pago) AS valor_total_pago
-                     FROM tabelao t
-                     JOIN tabelao_favorecidos tf 
-                     ON t.codigo_emenda = tf.codigo_emenda 
-                     WHERE tf.municipio_favorecido = 'belo horizonte' 
-                     AND t.descricao_funcao = 'educacao'
-                     GROUP BY t.nome_autor, t.tipo_autor, t.partido_autor
-                     ORDER BY valor_total_pago DESC
-                     LIMIT 10;"""
-    },
-    {
-        "input": "Para que a deputada Joice Hasselmann enviou recursos para o município de Campinas?",
-        "output": """SELECT t.descricao_acao, t.descricao_programa, t.descricao_funcao, t.descricao_subfuncao, SUM(tf.valor_pago) AS valor_total_pago
-                     FROM tabelao t 
-                     JOIN tabelao_favorecidos tf 
-                     ON t.codigo_emenda = tf.codigo_emenda 
-                     WHERE t.nome_autor = 'joice hasselmann' 
-                     AND tf.municipio_favorecido = 'campinas'
-                     GROUP BY t.descricao_acao, t.descricao_programa, t.descricao_funcao, t.descricao_subfuncao
-                     ORDER BY valor_total_pago DESC;"""
-    },
-    {
-        "input": "Quais municípios receberam mais recursos para infraestrutura?",
-        "output": """SELECT tf.municipio_favorecido, SUM(tf.valor_pago) AS valor_total_pago
-                     FROM tabelao t
-                     JOIN tabelao_favorecidos tf 
-                     ON t.codigo_emenda = tf.codigo_emenda 
-                     WHERE t.descricao_funcao = 'infraestrutura'
-                     GROUP BY tf.municipio_favorecido
-                     ORDER BY valor_total_pago DESC
-                     LIMIT 10;"""
-    },
-    {
-        "input": "Quais partidos enviaram mais recursos para segurança pública?",
-        "output": """SELECT t.partido_autor, SUM(tf.valor_pago) AS valor_total_pago
-                     FROM tabelao t
-                     JOIN tabelao_favorecidos tf 
-                     ON t.codigo_emenda = tf.codigo_emenda 
-                     WHERE t.descricao_funcao = 'seguranca publica'
-                     GROUP BY t.partido_autor
-                     ORDER BY valor_total_pago DESC;"""
-    },
-    {
-        "input": "Quais são os valores empenhados por cada autor de emenda?",
-        "output": """SELECT nome_autor, SUM(valor_empenhado) AS total_empenhado
-                     FROM emendas
-                     GROUP BY nome_autor
-                     ORDER BY total_empenhado DESC;"""
-    },
-    {
-        "input": "Qual o valor total pago por município favorecido?",
-        "output": """SELECT municipio_favorecido, SUM(valor_pago) AS total_pago
-                     FROM pagamentos
-                     GROUP BY municipio_favorecido
-                     ORDER BY total_pago DESC;"""
-    },
-    {
-        "input": "Qual é a função com o maior valor empenhado?",
-        "output": """SELECT descricao_funcao, SUM(valor_empenhado) AS total_empenhado
-                     FROM emendas
-                     GROUP BY descricao_funcao
-                     ORDER BY total_empenhado DESC
-                     LIMIT 1;"""
-    },
-    {
-        "input": "Quais são os autores de emendas que direcionaram recursos para o município 'Cuiabá'?",
-        "output": """SELECT e.nome_autor, p.municipio_favorecido, SUM(p.valor_pago) AS total_pago
-                     FROM emendas e
-                     JOIN pagamentos p ON e.codigo_emenda = p.codigo_emenda
-                     WHERE p.municipio_favorecido = 'cuiaba'
-                     GROUP BY e.nome_autor, p.municipio_favorecido;"""
-    },
-    {
-        "input": "Quais áreas receberam mais recursos via emendas parlamentares em 2024?",
-        "output": """SELECT descricao_funcao, SUM(valor_empenhado) AS total_empenhado
-                     FROM emendas
-                     WHERE codigo_emenda LIKE '%-2024'
-                     GROUP BY descricao_funcao
-                     ORDER BY total_empenhado DESC;"""
-    },
-    {
-        "input": "Quais parlamentares enviaram mais recursos para Curitiba em 2024?",
-        "output": """SELECT nome_autor, SUM(p.valor_pago) AS total_pago
-                     FROM emendas e
-                     JOIN pagamentos p ON e.codigo_emenda = p.codigo_emenda
-                     WHERE p.municipio_favorecido = 'curitiba'
-                     AND e.codigo_emenda LIKE '%-2024'
-                     GROUP BY nome_autor
-                     ORDER BY total_pago DESC;"""
-    },
-    {
-        "input": "Organize, em ordem decrescente, em uma tabela, os estados e o total de recursos recebidos por eles em 2024.",
-        "output": """SELECT p.uf_favorecido, SUM(p.valor_pago) AS total_pago
-                     FROM emendas e
-                     JOIN pagamentos p ON e.codigo_emenda = p.codigo_emenda
-                     WHERE e.codigo_emenda LIKE '%-2024'
-                     GROUP BY p.uf_favorecido
-                     ORDER BY total_pago DESC;"""
-    }
+                                                                                    LIMIT 10;"""}
 ]
 
 
